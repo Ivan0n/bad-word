@@ -3,82 +3,66 @@
 #include <string>
 #include <cstdlib>
 #include <ctime>
-#include <algorithm>
 
-using namespace std;
-const vector<string> WORDS = { "programming", "hangman", "computer", "developer", "language", "software" };
+class Hangman {
+private:
+    std::vector<std::string> words{ "programming", "computer", "developer", "hangman", "cplusplus" };
+    std::string word;
+    std::string guessedWord;
+    int attempts;
+    std::vector<char> wrongGuesses;
 
-void displayWord(const string& word, const vector<bool>& guessed) {
-    for (size_t i = 0; i < word.size(); i++) {
-        if (guessed[i]) {
-            cout << word[i] << " ";
+public:
+    Hangman() {
+        srand(time(0));
+        word = words[rand() % words.size()];
+        guessedWord = std::string(word.length(), '_');
+        attempts = 6;
+    }
+
+    void display() {
+        std::cout << "\nWord: " << guessedWord << "\n";
+        std::cout << "Attempts left: " << attempts << "\n";
+        std::cout << "Wrong guesses: ";
+        for (char c : wrongGuesses) std::cout << c << ' ';
+        std::cout << "\n";
+    }
+
+    void guess(char letter) {
+        if (word.find(letter) != std::string::npos) {
+            for (size_t i = 0; i < word.length(); ++i) {
+                if (word[i] == letter) guessedWord[i] = letter;
+            }
         }
         else {
-            cout << "_ ";
+            wrongGuesses.push_back(letter);
+            --attempts;
         }
     }
-    cout << endl;
-}
 
-char getUserGuess() {
-    setlocale(LC_ALL, "Russian");
-    char guess;
-    cout << "Введите букву: ";
-    cin >> guess;
-    return tolower(guess);
-}
+    bool isWon() { return guessedWord == word; }
+    bool isLost() { return attempts <= 0; }
 
-bool updateGuessed(const string& word, vector<bool>& guessed, char guess) {
-    bool found = false;
-    for (size_t i = 0; i < word.size(); i++) {
-        if (word[i] == guess) {
-            guessed[i] = true;
-            found = true;
-        }
-    }
-    return found;
-}
+    
+    std::string getWord() { return word; }
+};
 
 int main() {
-    setlocale(LC_ALL, "Russian");
-    srand(time(0));
-    string word = WORDS[rand() % WORDS.size()];
-    vector<bool> guessed(word.size(), false);
-    int attempts = 6;
-    vector<char> wrongGuesses;
+    Hangman game;
+    char letter;
 
-    cout << "Добро пожаловать в игру Виселица!" << endl;
-
-    while (attempts > 0) {
-        displayWord(word, guessed);
-        cout << "Ошибки: ";
-        for (char ch : wrongGuesses) {
-            cout << ch << " ";
-        }
-        cout << endl;
-        cout << "Осталось попыток: " << attempts << endl;
-
-        char guess = getUserGuess();
-
-        if (find(wrongGuesses.begin(), wrongGuesses.end(), guess) != wrongGuesses.end()) {
-            cout << "Вы уже вводили эту букву! Попробуйте снова." << endl;
-            continue;
-        }
-
-        if (!updateGuessed(word, guessed, guess)) {
-            wrongGuesses.push_back(guess);
-            attempts--;
-        }
-
-        if (all_of(guessed.begin(), guessed.end(), [](bool val) { return val; })) {
-            cout << "Поздравляем! Вы угадали слово: " << word << endl;
-            break;
-        }
+    while (!game.isWon() && !game.isLost()) {
+        game.display();
+        std::cout << "Enter a letter: ";
+        std::cin >> letter;
+        game.guess(letter);
     }
 
-    if (attempts == 0) {
-        cout << "Вы проиграли! Загаданное слово было: " << word << endl;
-    }
+    game.display();
+    if (game.isWon())
+        std::cout << "Congratulations! You guessed the word!\n";
+    else
+        std::cout << "Game over! The word was: " << game.getWord() << "\n";
 
     return 0;
 }
